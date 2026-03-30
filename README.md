@@ -66,7 +66,8 @@ Response with Disclaimer
 | "I need to see a cardiologist" | 📅 Appointment Agent |
 
 ## 📸 Workflow Screenshot
-![Workflow](screenshots/workflow.png)
+<img width="1492" height="657" alt="image" src="https://github.com/user-attachments/assets/cbb2da66-a2a3-4e13-b642-41e95ec5bbb2" />
+
 
 ## ⚠️ Disclaimer
 This AI system provides general health information only.
