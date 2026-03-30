@@ -1,0 +1,660 @@
+{
+  "name": "HealthcareAgent",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "availableInChat": true,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        -1776,
+        -1056
+      ],
+      "id": "676dc06e-0fb5-41fc-a889-dbb7f26179ca",
+      "name": "When chat message received",
+      "webhookId": "657f596b-01e2-4f17-b121-fcf439c69b29"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "You are a healthcare routing agent. Analyze the user message \nand decide which specialist to call. Reply with ONLY one word:\n- EMERGENCY (chest pain, difficulty breathing, stroke symptoms)\n- SYMPTOMS (general health questions, illness, fever)\n- MEDICATION (drug questions, dosage, interactions)\n- APPOINTMENT (booking, scheduling, availability)"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -1344,
+        -1104
+      ],
+      "id": "163852d1-8305-4159-8df9-4ce23d1610f8",
+      "name": "AI Agent",
+      "alwaysOutputData": false,
+      "executeOnce": false
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -1296,
+        -720
+      ],
+      "id": "95061424-8319-43e4-a350-c0f743132ab8",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "EMERGENCY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    },
+                    "id": "3f94dd8b-4c3e-4828-8423-c34feb60daec"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "deb3875b-9f7d-41d7-8bf5-9be9af1a8fca",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "SYMPTOMS",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d13b8a86-5826-4362-abc9-2fd4689ddaf6",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "MEDICATION",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "d4b0dc5d-6503-4e00-b94e-ad02f39eed1a",
+                    "leftValue": "={{ $json.output }}",
+                    "rightValue": "APPOINTMENT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "contains"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -928,
+        -1120
+      ],
+      "id": "fc95d572-93a1-4cb9-b5b1-31fd19b3c1a6",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -336,
+        -1232
+      ],
+      "id": "007e9770-4b91-417e-aaac-a96000bfa370",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kRDE70PZNa4bvKuO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -208,
+        -1232
+      ],
+      "id": "bae531ca-3eb2-4fca-8c67-ee0473d54771",
+      "name": "Simple Memory1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a medical symptom analysis agent.\nAnalyze the symptoms described by the user.\nList possible conditions from most to least likely.\nRecommend whether to see a doctor urgently or not.\nAlways end with:\n\"⚕️ This is not a medical diagnosis. Please consult a doctor.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        416,
+        -1232
+      ],
+      "id": "dfa68691-eac4-4a74-a71e-ad4a63da7008",
+      "name": "AI Agent2"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        272,
+        -1040
+      ],
+      "id": "44030ac8-8768-4808-9ccb-039f326186f8",
+      "name": "Google Gemini Chat Model2",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kRDE70PZNa4bvKuO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        448,
+        -1024
+      ],
+      "id": "842e47cc-0288-48d0-9e99-ebb2f80ffce0",
+      "name": "Simple Memory2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a medication information agent.\nProvide information about medications, dosages, and interactions.\nNever recommend changing prescriptions without doctor approval.\nAlways end with:\n\"💊 Consult your pharmacist or doctor before making any medication changes.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -96,
+        -912
+      ],
+      "id": "9692fb73-a852-4c1e-9a07-1a6889b000f5",
+      "name": "AI Agent3"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        32,
+        -576
+      ],
+      "id": "1fb272c2-62e0-4d33-a3c7-cc9c1c45eb70",
+      "name": "Google Gemini Chat Model3",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kRDE70PZNa4bvKuO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        192,
+        -560
+      ],
+      "id": "aa332c48-9890-4f2f-af5d-25ae3b449648",
+      "name": "Simple Memory3"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are a healthcare appointment scheduling agent.\nHelp users find the right specialist based on their symptoms.\nSuggest urgency level:\n- 🔴 Immediate (go to ER now)\n- 🟡 Within 24 hours (urgent care)\n- 🟢 Within a week (schedule appointment)\nAsk for preferred date and time if non-urgent."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -560,
+        -864
+      ],
+      "id": "f0ff3457-0077-406e-acbc-ebdb97adf728",
+      "name": "AI Agent4"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -608,
+        -560
+      ],
+      "id": "1cd3ab2a-061e-43a9-b808-f84d10151d54",
+      "name": "Google Gemini Chat Model4",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kRDE70PZNa4bvKuO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -432,
+        -544
+      ],
+      "id": "7dd99686-f95b-4b75-9cc4-e0cc313126fb",
+      "name": "Simple Memory4"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('When chat message received').item.json.chatInput }}",
+        "options": {
+          "systemMessage": "You are an emergency healthcare agent. \nYour job is to assess life-threatening situations.\n\nIf the user describes ANY of these symptoms:\n- Chest pain or pressure\n- Difficulty breathing\n- Signs of stroke (face drooping, arm weakness, speech difficulty)\n- Severe bleeding\n- Loss of consciousness\n- Severe allergic reaction\n\nImmediately respond with:\n1. Tell them to CALL 911 RIGHT NOW\n2. Provide immediate first aid steps while waiting for help\n3. Keep them calm with reassuring language\n\nAlways end every response with:\n\"🚨 Please call emergency services (911) immediately. \nDo not wait.\""
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -464,
+        -1632
+      ],
+      "id": "33e84cb9-9f9d-4d8e-93ba-293b174a3ea0",
+      "name": "AI Agent1"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -1472,
+        -704
+      ],
+      "id": "ebf33846-6e25-482c-a5e6-1d8837beb197",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "kRDE70PZNa4bvKuO",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        -48,
+        -1360
+      ],
+      "id": "12fd80d3-b70b-4ce7-9593-b539b16a9292",
+      "name": "SerpAPI",
+      "credentials": {
+        "serpApi": {
+          "id": "c2FoCkSpcaF7ba4G",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        608,
+        -1008
+      ],
+      "id": "95da8eab-c5ba-44b9-afe3-d6c1ecaa5a24",
+      "name": "SerpAPI1",
+      "credentials": {
+        "serpApi": {
+          "id": "c2FoCkSpcaF7ba4G",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        288,
+        -704
+      ],
+      "id": "ac8842eb-233d-40d8-b5b5-f413a2364670",
+      "name": "SerpAPI2",
+      "credentials": {
+        "serpApi": {
+          "id": "c2FoCkSpcaF7ba4G",
+          "name": "SerpAPI account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolSerpApi",
+      "typeVersion": 1,
+      "position": [
+        -288,
+        -608
+      ],
+      "id": "68e43497-3486-477b-b165-0ca6b1cb9123",
+      "name": "SerpAPI3",
+      "credentials": {
+        "serpApi": {
+          "id": "c2FoCkSpcaF7ba4G",
+          "name": "SerpAPI account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent3",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "AI Agent4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory2": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory3": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model4": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory4": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent2",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI2": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent3",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SerpAPI3": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent4",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "b1d73444-4857-4d68-8801-67e544a1e491",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "df9cdc6e78072edfdffa94aced4a71c87ada4b88970e01c5f97cdc08b346827d"
+  },
+  "id": "olAfkbOKYxejU6E5",
+  "tags": []
+}
